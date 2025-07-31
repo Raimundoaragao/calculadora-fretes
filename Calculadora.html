@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Fretes</title>
+    <!-- Inclui o Tailwind CSS para estilização moderna e responsiva -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .container-app {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .card {
+            background-color: #ffffff;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .input-group label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #4b5563;
+            margin-bottom: 0.25rem;
+        }
+        .input-group input {
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            outline: none;
+        }
+        .input-group input:focus {
+            border-color: #3b82f6;
+            ring: 2px;
+            ring-color: #93c5fd;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="container-app">
+        <h1 class="text-4xl font-bold text-center text-gray-800 mb-8">Calculadora de Fretes</h1>
+        
+        <!-- Formulário de Entrada -->
+        <div class="card">
+            <h2 class="text-2xl font-bold text-gray-700 mb-6">Dados da Viagem</h2>
+            <form id="freight-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Linha 1 -->
+                <div class="input-group">
+                    <label for="cidade-origem">Cidade Origem</label>
+                    <input type="text" id="cidade-origem" value="SAPEZAL-MT" required>
+                </div>
+                <div class="input-group">
+                    <label for="cidade-destino">Cidade Destino</label>
+                    <input type="text" id="cidade-destino" value="BARCARENA-PA" required>
+                </div>
+                <div class="input-group">
+                    <label for="valor-frete-ton">Valor Frete por Ton (R$)</label>
+                    <input type="number" id="valor-frete-ton" value="160" step="0.01" required>
+                </div>
+                
+                <!-- Linha 2 -->
+                <div class="input-group">
+                    <label for="local-carregamento">Local de Carregamento</label>
+                    <input type="text" id="local-carregamento" value="CIDADE" required>
+                </div>
+                <div class="input-group">
+                    <label for="local-descarga">Local de Descarga</label>
+                    <input type="text" id="local-descarga" value="HBSA" required>
+                </div>
+                <div class="input-group">
+                    <label for="peso-saida">Peso de Saída (Ton)</label>
+                    <input type="number" id="peso-saida" value="48" step="0.01" required>
+                </div>
+
+                <!-- Linha 3 -->
+                <div class="input-group">
+                    <label for="km-chao">Km Chão</label>
+                    <input type="number" id="km-chao" value="700" step="1" required>
+                </div>
+                <div class="input-group">
+                    <label for="km-asfalto">Km Asfalto</label>
+                    <input type="number" id="km-asfalto" value="835" step="1" required>
+                </div>
+                <div class="input-group">
+                    <label for="media-caminhao">Média Caminhão (Km/L)</label>
+                    <input type="number" id="media-caminhao" value="1.5" step="0.1" required>
+                </div>
+
+                <!-- Linha 4 -->
+                <div class="input-group">
+                    <label for="pedagio">Pedágio (R$)</label>
+                    <input type="number" id="pedagio" value="65" step="0.01" required>
+                </div>
+                <div class="input-group">
+                    <label for="valor-litro-diesel">Valor Litro Diesel (R$)</label>
+                    <input type="number" id="valor-litro-diesel" value="5.96" step="0.01" required>
+                </div>
+                <div class="input-group">
+                    <label for="outras-despesas">Outras Despesas (R$)</label>
+                    <input type="number" id="outras-despesas" value="0" step="0.01" required>
+                </div>
+                
+                <div class="col-span-1 md:col-span-2 lg:col-span-3 flex justify-center mt-4">
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full transition duration-300 transform hover:scale-105 shadow-lg">
+                        Calcular Frete
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Seção de Resultados e Gráfico -->
+        <div class="card grid grid-cols-1 md:grid-cols-2 gap-8" id="results-section" style="display:none;">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-700 mb-6">Resumo da Viagem</h2>
+                <div id="results-summary" class="space-y-4">
+                    <!-- Resultados serão injetados aqui -->
+                </div>
+            </div>
+            
+            <div class="flex flex-col items-center justify-center">
+                <h2 class="text-2xl font-bold text-gray-700 mb-6">Análise de Custos</h2>
+                <div class="w-full max-w-md">
+                    <canvas id="cost-pie-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Histórico de Cálculos -->
+        <div class="card">
+            <h2 class="text-2xl font-bold text-gray-700 mb-6">Histórico de Cálculos</h2>
+            <div id="history-list" class="space-y-4">
+                <!-- Histórico será injetado aqui -->
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, addDoc, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import "https://cdn.jsdelivr.net/npm/chart.js";
+
+        // Variáveis globais para configuração do Firebase, fornecidas pelo ambiente.
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // Inicializa o Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        
+        let userId = null;
+        let isAuthReady = false;
+
+        // Seção para o gráfico de pizza
+        const ctx = document.getElementById('cost-pie-chart').getContext('2d');
+        let costPieChart;
+
+        // Mapeamento de IDs dos inputs
+        const formInputs = {
+            cidadeOrigem: document.getElementById('cidade-origem'),
+            cidadeDestino: document.getElementById('cidade-destino'),
+            valorFreteTon: document.getElementById('valor-frete-ton'),
+            localCarregamento: document.getElementById('local-carregamento'),
+            localDescarga: document.getElementById('local-descarga'),
+            pesoSaida: document.getElementById('peso-saida'),
+            kmChao: document.getElementById('km-chao'),
+            kmAsfalto: document.getElementById('km-asfalto'),
+            mediaCaminhao: document.getElementById('media-caminhao'),
+            pedagio: document.getElementById('pedagio'),
+            valorLitroDiesel: document.getElementById('valor-litro-diesel'),
+            outrasDespesas: document.getElementById('outras-despesas'),
+        };
+
+        const resultsSection = document.getElementById('results-section');
+        const resultsSummary = document.getElementById('results-summary');
+        const historyList = document.getElementById('history-list');
+
+        // Função para formatar números como moeda BRL
+        const formatCurrency = (value) => {
+            return new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            }).format(value);
+        };
+
+        // Função para autenticar o usuário
+        const authenticateUser = async () => {
+            try {
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Erro na autenticação:", error);
+            }
+        };
+
+        // Listener de autenticação para configurar o Firestore
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                userId = user.uid;
+                isAuthReady = true;
+                console.log("Usuário autenticado:", userId);
+                setupHistoryListener();
+            } else {
+                console.log("Nenhum usuário autenticado.");
+                isAuthReady = true;
+                historyList.innerHTML = '<p class="text-gray-500 text-center">Faça um cálculo para salvar seu histórico.</p>';
+            }
+        });
+
+        // Configura o listener para o histórico de cálculos
+        const setupHistoryListener = () => {
+            if (!isAuthReady || !userId) return;
+
+            const userHistoryCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/calculos_frete`);
+            
+            onSnapshot(userHistoryCollectionRef, (snapshot) => {
+                const calculations = [];
+                snapshot.forEach(doc => {
+                    calculations.push({ id: doc.id, ...doc.data() });
+                });
+                
+                // Ordena por data de criação
+                calculations.sort((a, b) => b.timestamp - a.timestamp);
+                
+                renderHistory(calculations);
+            }, (error) => {
+                console.error("Erro ao carregar histórico:", error);
+            });
+        };
+
+        // Função para renderizar o histórico na página
+        const renderHistory = (calculations) => {
+            historyList.innerHTML = '';
+            if (calculations.length === 0) {
+                historyList.innerHTML = '<p class="text-gray-500 text-center">Nenhum cálculo no histórico.</p>';
+                return;
+            }
+
+            calculations.forEach(calc => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm';
+                historyItem.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-lg font-semibold text-gray-800">${calc.cidadeOrigem} -> ${calc.cidadeDestino}</h3>
+                        <span class="text-sm text-gray-500">${new Date(calc.timestamp.seconds * 1000).toLocaleDateString('pt-BR')}</span>
+                    </div>
+                    <p class="text-gray-700">Frete Total: <span class="font-bold">${formatCurrency(calc.valorTotalFrete)}</span></p>
+                    <p class="text-gray-700">Frete Líquido: <span class="font-bold text-green-600">${formatCurrency(calc.freteLiquidoTotal)}</span></p>
+                `;
+                historyList.appendChild(historyItem);
+            });
+        };
+
+        // Event listener para o formulário
+        document.getElementById('freight-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Pega os valores dos inputs
+            const values = Object.keys(formInputs).reduce((acc, key) => {
+                acc[key] = parseFloat(formInputs[key].value) || formInputs[key].value;
+                return acc;
+            }, {});
+
+            // Cálculos baseados na planilha do usuário
+            const totalKm = values.kmChao + values.kmAsfalto;
+            const consumoTotalLtsDiesel = totalKm / values.mediaCaminhao;
+            const custoTotalDiesel = consumoTotalLtsDiesel * values.valorLitroDiesel;
+            const valorTotalFrete = values.valorFreteTon * values.pesoSaida;
+            const despesasTotal = custoTotalDiesel + values.pedagio + values.outrasDespesas;
+            const freteLiquidoTotal = valorTotalFrete - despesasTotal;
+            const valorKmBruto = valorTotalFrete / totalKm;
+            const custoPKm = despesasTotal / totalKm;
+            const sobrasPKmLiquido = freteLiquidoTotal / totalKm;
+
+            // Prepara os dados para salvar
+            const calculationData = {
+                cidadeOrigem: values.cidadeOrigem,
+                cidadeDestino: values.cidadeDestino,
+                valorTotalFrete: valorTotalFrete,
+                freteLiquidoTotal: freteLiquidoTotal,
+                despesasTotal: despesasTotal,
+                custoTotalDiesel: custoTotalDiesel,
+                pedagio: values.pedagio,
+                outrasDespesas: values.outrasDespesas,
+                totalKm: totalKm,
+                timestamp: serverTimestamp() // Adiciona um timestamp do servidor
+            };
+
+            // Salva no Firestore se o usuário estiver autenticado
+            if (isAuthReady && userId) {
+                try {
+                    const userHistoryCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/calculos_frete`);
+                    await addDoc(userHistoryCollectionRef, calculationData);
+                } catch (error) {
+                    console.error("Erro ao salvar cálculo no Firestore:", error);
+                }
+            } else {
+                console.warn("Usuário não autenticado, cálculo não será salvo.");
+            }
+
+            // Exibe os resultados
+            resultsSection.style.display = 'grid';
+            resultsSummary.innerHTML = `
+                <div class="flex justify-between items-center border-b pb-2">
+                    <span class="font-semibold text-gray-600">Total de Km:</span>
+                    <span class="font-bold text-gray-800">${totalKm.toFixed(2)} Km</span>
+                </div>
+                <div class="flex justify-between items-center border-b pb-2">
+                    <span class="font-semibold text-gray-600">Valor Total Frete:</span>
+                    <span class="font-bold text-green-600 text-xl">${formatCurrency(valorTotalFrete)}</span>
+                </div>
+                <div class="flex justify-between items-center border-b pb-2">
+                    <span class="font-semibold text-gray-600">Consumo Total Diesel:</span>
+                    <span class="font-bold text-gray-800">${consumoTotalLtsDiesel.toFixed(2)} Litros</span>
+                </div>
+                <div class="flex justify-between items-center border-b pb-2">
+                    <span class="font-semibold text-gray-600">Valor Frete por Km Bruto:</span>
+                    <span class="font-bold text-gray-800">${formatCurrency(valorKmBruto)}</span>
+                </div>
+                <div class="flex justify-between items-center border-b pb-2">
+                    <span class="font-semibold text-gray-600">Despesas Totais:</span>
+                    <span class="font-bold text-red-600">${formatCurrency(despesasTotal)}</span>
+                </div>
+                <div class="flex justify-between items-center border-b pb-2">
+                    <span class="font-semibold text-gray-600">Custo por Km:</span>
+                    <span class="font-bold text-gray-800">${formatCurrency(custoPKm)}</span>
+                </div>
+                <div class="flex justify-between items-center border-b pb-2">
+                    <span class="font-semibold text-gray-600">Frete Líquido Total:</span>
+                    <span class="font-bold text-green-600 text-xl">${formatCurrency(freteLiquidoTotal)}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="font-semibold text-gray-600">Sobras por Km Líquido:</span>
+                    <span class="font-bold text-gray-800">${formatCurrency(sobrasPKmLiquido)}</span>
+                </div>
+            `;
+
+            // Atualiza o gráfico de pizza
+            const chartData = {
+                labels: ['Custo Diesel', 'Pedágio', 'Outras Despesas', 'Frete Líquido'],
+                datasets: [{
+                    label: 'Análise de Custos',
+                    data: [custoTotalDiesel, values.pedagio, values.outrasDespesas, freteLiquidoTotal],
+                    backgroundColor: [
+                        'rgba(239, 68, 68, 0.7)', // Vermelho para Diesel
+                        'rgba(59, 130, 246, 0.7)', // Azul para Pedágio
+                        'rgba(245, 158, 11, 0.7)', // Amarelo para Outras Despesas
+                        'rgba(16, 185, 129, 0.7)', // Verde para Frete Líquido
+                    ],
+                    borderColor: [
+                        'rgb(239, 68, 68)',
+                        'rgb(59, 130, 246)',
+                        'rgb(245, 158, 11)',
+                        'rgb(16, 185, 129)',
+                    ],
+                    borderWidth: 1
+                }]
+            };
+
+            const chartConfig = {
+                type: 'pie',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                color: '#333'
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed;
+                                    return `${label}: ${formatCurrency(value)}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+            
+            if (costPieChart) {
+                costPieChart.data = chartData;
+                costPieChart.update();
+            } else {
+                costPieChart = new Chart(ctx, chartConfig);
+            }
+        });
+        
+        // Inicia a autenticação do usuário
+        authenticateUser();
+    </script>
+</body>
+</html>
